@@ -52,6 +52,31 @@ class Math:
             v3=temp
         return v1, v2, v3
 
+class Model:
+
+    def __init__(self, points, edges, triangles):
+
+        self.points = points
+        self.edges = edges
+        self.triangles = triangles
+
+        # for i in range(0, len(self.edges)):
+        #     pointA = self.points[self.edges[i][0]].copy()
+        #     pointB = self.points[self.edges[i][1]].copy()
+        #     pointA=canvas.perspective(pointA)
+        #     pointB=canvas.perspective(pointB)
+        #     canvas.drawLine(pointA, pointB)
+
+    # def edges():
+    #     pass
+
+
+    # def triangles():
+    #     pass
+
+
+
+
 
 class canvas:
     def __init__(self, width, height):
@@ -61,6 +86,26 @@ class canvas:
         self.backingImage =Image.new('RGB', size, (255, 255, 255))
         self.drawer = ImageDraw.Draw(self.backingImage)
  
+    def drawModel(self, m, wireframeMode):
+
+
+
+        for i in range(0, len(m.triangles)):
+            pointA = m.points[m.triangles[i][0]].copy()
+            pointB = m.points[m.triangles[i][1]].copy()
+            pointC = m.points[m.triangles[i][2]].copy()
+            pointA=self.perspective(pointA)
+            pointB=self.perspective(pointB)
+            pointC=self.perspective(pointC)
+            self.drawTriangle(pointA, pointB, pointC)
+
+        if wireframeMode == True:
+            for i in range(0, len(m.edges)):
+                pointA = m.points[m.edges[i][0]].copy()
+                pointB = m.points[m.edges[i][1]].copy()
+                pointA=self.perspective(pointA)
+                pointB=self.perspective(pointB)
+                self.drawLine(pointA, pointB)
 
     def wireCube(self, point1, point2, point3, point4, point5, point6, point7, point8):
 
@@ -94,8 +139,8 @@ class canvas:
     def drawLine(self, point1, point2):
         p1 = point1.copy()
         p2 = point2.copy()
-        p1 = self.perspective(p1)
-        p2 = self.perspective(p2)
+        # p1 = self.perspective(p1)
+        # p2 = self.perspective(p2)
         longest_axis = math.ceil(max(abs(p2.x - p1.x), abs(p2.y - p1.y)))
 
         for i in range(0, int(longest_axis)):
@@ -117,6 +162,9 @@ class canvas:
         p1 = point1.copy()
         p2 = point2.copy()
         p3 = point3.copy()
+        # p1 = self.perspective(p1)
+        # p2 = self.perspective(p2)
+        # p3 = self.perspective(p3)
         p1, p2, p3 = Math.sortVec(p1, p2, p3)
 
 
@@ -166,42 +214,77 @@ screen = canvas(width, height)
 # color3 = (randint(0, rgb), randint(0,rgb), randint(0,rgb))
 # color4 = (25, 90, 100)
 
+vec = []
+file = open("untitled.obj","r") #opens file with name of "test.txt"
+content = file.readlines()
+v = []
+content = [x.strip() for x in content]
+for i in range(0, len(content)):
+    if content[i].startswith('v'):
+        v.append(content[i])
+x= []
+y=[]
+for i in range(0, 8):
+    v[i]=v[i][2:]
+    vec.append(list(map(float, v[i].split())))
 
-# screen.drawTriangle(point1, point2, point3)
-# screen.drawTriangle(point2, point3, point4)
-# screen.drawTriangle(point8, point5, point7)
-# screen.drawTriangle(point6, point1, point5)
-# screen.drawTriangle(point7, point1, point3)
-# screen.drawTriangle(point4, point6, point8)
-# screen.drawTriangle(point2, point4, point3)
-# screen.drawTriangle(point4, point8, point7)
-# screen.drawTriangle(point8, point6, point3)
-# screen.drawTriangle(point1, point2, point6)
-# screen.drawTriangle(point7, point5, point1)
-# screen.drawTriangle(point4, point2, point6)
+    print(vec)
 
-vec1 = [200, 200, 0]
-vec2 = [200, 400, 0]
-vec3 = [400, 200, 0]
-vec4 = [400, 400, 0]
-vec5 = [200, 200, 20]
-vec6 = [200, 400, 20]
-vec7 = [400, 200, 20]
-vec8 = [400, 400, 20]
+
+# vec1 = [200, 200, 0]
+# vec2 = [200, 400, 0]
+# vec3 = [400, 200, 0]
+# vec4 = [400, 400, 0]
+# vec5 = [200, 200, 20]
+# vec6 = [200, 400, 20]
+# vec7 = [400, 200, 20]
+# vec8 = [400, 400, 20]
 
 color1 = [50, 50, 50]
 color2 = [200, 200, 200]
 
-point1 = Point(vec1, color1)
-point2 = Point(vec2, color1)
-point3 = Point(vec3, color1)
-point4 = Point(vec4, color1)
+p1 = Point(vec[0], color1)
+p2 = Point(vec[1], color1)
+p3 = Point(vec[2], color1)
+p4 = Point(vec[3], color1)
 
-point5 = Point(vec5, color2)
-point6 = Point(vec6, color2)
-point7 = Point(vec7, color2)
-point8 = Point(vec8, color2)
+p5 = Point(vec[4], color2)
+p6 = Point(vec[5], color2)
+p7 = Point(vec[6], color2)
+p8 = Point(vec[7], color2)
 
-screen.wireCube(point1, point2, point3, point4, point5, point6, point7, point8)
+points = [p1, p2, p3, p4, p5, p6, p7, p8]
+edges = [(0,1), (0,2), (1,3), (2,3), (4,5), (4,6), (5,7), (6,7), (0,4), (1, 5), (2,6), (3,7)]
+triangles = [(7,4,6), (5,4,7), (0,2,4), (2,4,6), (3,7,6), (2,3,6), (0,1,5), (5,0,4), (1,3,5), (3,5,7), (0,1,2), (1,2,3)]
+
+
+cube = Model(points, edges, triangles)
+screen.drawModel(cube, True)
+# cube.points = [point1, point2, point3, point4, point5, point6, point7, point8]
+
+# # #baksidan
+# screen.drawTriangle(point8, point5, point7)
+# screen.drawTriangle(point6, point5, point8)
+
+# screen.drawTriangle(point1, point3, point5)
+# screen.drawTriangle(point3, point5, point7)
+
+# #högra sidan
+# screen.drawTriangle(point4, point8, point7)
+# screen.drawTriangle(point3, point4, point7)
+
+# #vänstra sidan
+# screen.drawTriangle(point1, point2, point6)
+# screen.drawTriangle(point6, point1, point5)
+
+# #undersidan
+# screen.drawTriangle(point2, point4, point6)
+# screen.drawTriangle(point4, point6, point8)
+# #framsida
+# screen.drawTriangle(point1, point2, point3)
+# screen.drawTriangle(point2, point3, point4)
+
+
+# screen.wireCube(cube.p1, cube.p2, cube.p3, cube.p4, cube.p5, cube.p6, cube.p7, cube.p8)
 
 screen.saveImage("beautiful")
