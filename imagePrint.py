@@ -3,13 +3,18 @@ from random import randint
 import math
 
 class Point:
-    def __init__(self, x, y, color):
-        self.x = x
-        self.y = y
+    def __init__(self, v, color):
+        self.x = v[0]
+        self.y = v[1]
+        self.z = v[2]
         self.color = color
      
     def lerp(a, b, t):
-        return Point(Math.flerp(a.x, b.x, t), Math.flerp(a.y, b.y, t), Math.lerpColors(a.color, b.color, t))
+        return Point([Math.flerp(a.x, b.x, t), Math.flerp(a.y, b.y, t), Math.flerp(a.z, b.z, t)], Math.lerpColors(a.color, b.color, t))
+
+    def copy (a):
+        b = Point([a.x, a.y, a.z], a.color)
+        return b
 
 class Math:
 
@@ -24,24 +29,24 @@ class Math:
         return int(round(x[0])),int(round(x[1])), int(round(x[2]))
 
     def lerpVect(v1, v2, length):
-        a = int(round(p1.x + (p2.x-p1.x)*length))
-        b = int(round(p1.y + (p2.y-p1.y)*length))
+        a = int(round(p1.x + (point2.x-p1.x)*length))
+        b = int(round(p1.y + (point2.y-p1.y)*length))
         return [a,b]
 
     def sortVec(v1, v2, v3):
-        x = [p1.y,p2.y,p3.y]
+        x = [v1.y,v2.y,v3.y]
         x = sorted(x)
 
-        if p2.y == x[1]:
+        if v2.y == x[1]:
             temp=v1
             v1=v2
             v2=temp
 
-        if p3.y == x[1]:
+        if v3.y == x[1]:
             temp=v1
             v1=v3
             v3=temp
-        if p2.y == x[0]:
+        if v2.y == x[0]:
             temp = v2
             v2=v3
             v3=temp
@@ -49,55 +54,53 @@ class Math:
 
 
 class canvas:
-    def __init__(self, width, height, filler):
+    def __init__(self, width, height):
         self.width = width
         self.height = height
         size = [width, height]
         self.backingImage =Image.new('RGB', size, (255, 255, 255))
         self.drawer = ImageDraw.Draw(self.backingImage)
  
+
+    def wireCube(self, point1, point2, point3, point4, point5, point6, point7, point8):
+
+        screen.drawLine(point1, point2)
+        screen.drawLine(point1, point3)
+        screen.drawLine(point2, point4)
+        screen.drawLine(point3, point4)
+
+        screen.drawLine(point5, point6)
+        screen.drawLine(point5, point7)
+        screen.drawLine(point6, point8)
+        screen.drawLine(point7, point8)
+
+        screen.drawLine(point1, point5)
+        screen.drawLine(point2, point6)
+        screen.drawLine(point3, point7)
+        screen.drawLine(point4, point8)
+
+    def perspective(self, p):
+        mp = (self.width/2, self.height/2)
+      #  p1.x = Math.flerp(p1.x, mp[0], (p1.z/10*0.0001))
+       # p1.y = Math.flerp(p1.y, mp[1], (p1.z/10*0.0001))
+        p.x = p.x + ((mp[0] - p.x)*p.z*0.01)
+        p.y = p.y + ((mp[1] - p.y)*p.z*0.01)
+
+        return p
+
     def setPixel(self, a):
-        #print(a.x, a.y)
         self.drawer.point((int(round(a.x)), int(round(a.y))), fill=a.color)
 
-    def drawLine(self, p1, p2):
+    def drawLine(self, point1, point2):
+        p1 = point1.copy()
+        p2 = point2.copy()
+        p1 = self.perspective(p1)
+        p2 = self.perspective(p2)
         longest_axis = math.ceil(max(abs(p2.x - p1.x), abs(p2.y - p1.y)))
+
         for i in range(0, int(longest_axis)):
-            point = Point.lerp(p1, p2, i / int(longest_axis))
+            point = Point.lerp(p1, p2, i / longest_axis)
             self.setPixel(point)
-
- #   def drawLine(self, p1, p2):
-        xLength = abs(p1.x - p2.x)
-        yLength = abs(p1.y - p2.y)
-
-        maxLengthRounded = int(round(max(xLength, yLength)))
-        maxLength = max(xLength, yLength)
-        #print(p1.x, p2.x, maxLength, xLength)
-        xParam = 1
-        yParam = 1
-        xRatio = 1
-        yRatio = 1
-        if p1.x > p2.x:
-            xParam = -1
-        if p1.y > p2.y:
-            yParam = -1        
-
-        if max(xLength, yLength) == yLength and yLength != xLength:
-            xRatio=xLength/yLength
-            yRatio=1
-
-        if max(xLength, yLength) == xLength and xLength != yLength:
-            xRatio=1
-            yRatio=yLength/xLength
-        x=[]
-        y=[]
-
-        for i in range(0, maxLengthRounded):
-            if maxLength == 0:
-                maxLength = 1
-            a = Point.lerp(p1,p2, i/maxLength)
-            #print(a.x, p1.x, p2.x)
-            self.setPixel(a)
             
     def drawRectangle(x, y, width, height, col1, col2, col3, col4):
         topLineStart = [x, y]
@@ -110,10 +113,17 @@ class canvas:
             topLineStart[0] += 1
             topLineEnd[0] += 1
 
-    def drawTriangle(self, p1, p2, p3):
-
+    def drawTriangle(self, point1, point2, point3):
+        p1 = point1.copy()
+        p2 = point2.copy()
+        p3 = point3.copy()
         p1, p2, p3 = Math.sortVec(p1, p2, p3)
-        
+
+
+        # p1 = self.perspective(p1)
+        # p2 = self.perspective(p2)
+        # p3 = self.perspective(p3)
+
         spanLengthV3 = abs(p1.y - p3.y)
         spanLengthV2 = abs(p1.y - p2.y)
         spanLength = abs(max(p1.x, p1.y))
@@ -122,47 +132,76 @@ class canvas:
         if spanLengthV3 == 0:
             spanLengthV3 = 1
 
-        t = abs((p1.y-p3.y)/(p2.y-p3.y))
+        t=0
+        if (p2.y-p3.y) != 0:
+
+            t = abs((p1.y-p3.y)/(p2.y-p3.y))
         p4 = Point.lerp(p3, p2, t)
 
 
-        for i in range(0, spanLengthV2 + 1):
-            a = Point.lerp(p2,p1, 1/spanLengthV2*i)
-            b = Point.lerp(p2,p4, 1/spanLengthV2*i)
+        for i in range(0, int(spanLengthV2) + 1):
+            a = Point.lerp(p2,p1, i/spanLengthV2)
+            b = Point.lerp(p2,p4, i/spanLengthV2)
+            #a = self.perspective(a)
+            #b = self.perspective(b)
             self.drawLine(a, b)
 
-        for i in range(0, spanLengthV3 + 1):
-            a = Point.lerp(p3,p1, 1/spanLengthV3*i)
-            b = Point.lerp(p3,p4, 1/spanLengthV3*i)
+        for i in range(0, int(spanLengthV3) + 1):
+            a = Point.lerp(p3,p1, i/spanLengthV3)
+            b = Point.lerp(p3,p4, i/spanLengthV3)
+            #a = self.perspective(a)
+            #b = self.perspective(b)
             self.drawLine(a, b)
 
     def saveImage(self, name):
         self.backingImage.save(name + ".png")
 
-width = 1920
-height = 1080
-screen = canvas(width, height, " ")
-v1 = [randint(0, width), randint(0,height)]
-v2 = [randint(0, width), randint(0,height)]
-v3 = [randint(0, width), randint(0,height)]
-
-color1 = (255, 125, 79)
-color2 = (14, 255, 124)
-color3 = (67, 28, 255)
-color4 = (25, 90, 100)
 
 
-p1 = Point(v1[0], v1[1], color1)
-p2 = Point(v2[0], v2[1], color2)
-p3 = Point(v3[0], v3[1], color3)
+width = 1000
+height = 1000
+screen = canvas(width, height)
+# color1 = (randint(0, rgb), randint(0,rgb), randint(0,rgb))
+# color2 = (randint(0, rgb), randint(0,rgb), randint(0,rgb))
+# color3 = (randint(0, rgb), randint(0,rgb), randint(0,rgb))
+# color4 = (25, 90, 100)
 
-#screen.drawLine(p2, p3)
-screen.drawTriangle(p1, p2, p3)
-#screen.drawTriangle(v1, v2, v3, color1, color2, color3)
-#screen.drawLine(v1, v2, color1, color1)
-#screen.drawLine(v1, v3, color1, color1)
-#screen.drawLine(v2, v3, color1, color1)
-#width = 800
-#height = 600
-#screen.drawRectangle(p1.x, p1.y, height, width, color1, color2, color3, color4)
+
+# screen.drawTriangle(point1, point2, point3)
+# screen.drawTriangle(point2, point3, point4)
+# screen.drawTriangle(point8, point5, point7)
+# screen.drawTriangle(point6, point1, point5)
+# screen.drawTriangle(point7, point1, point3)
+# screen.drawTriangle(point4, point6, point8)
+# screen.drawTriangle(point2, point4, point3)
+# screen.drawTriangle(point4, point8, point7)
+# screen.drawTriangle(point8, point6, point3)
+# screen.drawTriangle(point1, point2, point6)
+# screen.drawTriangle(point7, point5, point1)
+# screen.drawTriangle(point4, point2, point6)
+
+vec1 = [200, 200, 0]
+vec2 = [200, 400, 0]
+vec3 = [400, 200, 0]
+vec4 = [400, 400, 0]
+vec5 = [200, 200, 20]
+vec6 = [200, 400, 20]
+vec7 = [400, 200, 20]
+vec8 = [400, 400, 20]
+
+color1 = [50, 50, 50]
+color2 = [200, 200, 200]
+
+point1 = Point(vec1, color1)
+point2 = Point(vec2, color1)
+point3 = Point(vec3, color1)
+point4 = Point(vec4, color1)
+
+point5 = Point(vec5, color2)
+point6 = Point(vec6, color2)
+point7 = Point(vec7, color2)
+point8 = Point(vec8, color2)
+
+screen.wireCube(point1, point2, point3, point4, point5, point6, point7, point8)
+
 screen.saveImage("beautiful")
