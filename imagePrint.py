@@ -2,6 +2,7 @@ from PIL import Image, ImageDraw
 from random import randint
 import math
 
+
 class Point:
     def __init__(self, coordinate, color):
         self.coordinate = coordinate
@@ -20,12 +21,16 @@ class Math:
     def flerp(a, b, t):
         return a + (b - a)*t
 
+    # def lerpColors(col1, col2, t):
+        # x=()        
+        # for i in range(0, len(col1)):
+        #     y=Math.flerp(col1[i], col2[i], t)
+        #     x[i]=y
+        # return int(x[0]),int(x[1]), int(x[2])
     def lerpColors(col1, col2, t):
-        x = []
-        for i in range(0, len(col1)):
-            y=Math.flerp(col1[i], col2[i], t)
-            x.append(y)
-        return int(round(x[0])),int(round(x[1])), int(round(x[2]))
+        return (int(Math.flerp(col1[0], col2[0], t)),
+               int(Math.flerp(col1[1], col2[1], t)),
+               int(Math.flerp(col1[2], col2[2], t)))
 
     def sortVec(v1, v2, v3):
         x = [v1.coordinate.y,v2.coordinate.y,v3.coordinate.y]
@@ -164,7 +169,7 @@ class canvas:
 
 
         for i in range(0, len(m.triangles)):
-            
+
             pointA = m.points[m.triangles[i][0]].copy()
             pointB = m.points[m.triangles[i][1]].copy()
             pointC = m.points[m.triangles[i][2]].copy()
