@@ -52,6 +52,83 @@ class Math:
             v3=temp
         return v1, v2, v3
 
+class Obj:
+    def __init__(self, filename):
+        self.filename = filename
+        file = open(self.filename + ".obj","r") #opens file with name of "test.txt"
+        content = file.readlines()
+        v = []
+        vec = []
+        f = []
+        x = []
+        y = []
+
+        content = [x.strip() for x in content]
+
+        for i in range(0, len(content)):
+            if content[i].startswith('v ') == True:
+                v.append(content[i])
+
+        for i in range(0, len(v)):
+            v[i]=v[i][2:]
+            vec.append(list(map(float, v[i].split())))
+
+        for i in range(0, len(content)):
+            if content[i].startswith('f'):
+                f.append(content[i])
+
+
+        for i in range(0, len(f)):
+            f[i]=f[i][2:]
+
+        fv=[]
+        ft=[]
+        fn=[]
+        z=[]
+        a=[]
+        b=[]
+        c=[]
+        d = []
+
+        for i in range(0, len(f)):
+            y.append(list(f[i].split()))
+            a.append(list(y[i][0].split("/")))
+            b.append(list(y[i][1].split("/")))
+            c.append(list(y[i][2].split("/")))
+            d.append(list(y[i][0].split("/")))
+
+
+        for i in range(0, len(f)):
+            d[i][0]=int(a[i][0]) - 1
+            d[i][1]=int(b[i][0]) - 1
+            d[i][2]=int(c[i][0]) - 1
+            fv.append(tuple(d[i]))
+
+        if a[0][1] != '':
+            for i in range(0, len(f)):
+                d[i][0]=int(a[i][1]) - 1
+                d[i][1]=int(b[i][1]) - 1
+                d[i][2]=int(c[i][1]) - 1
+                ft.append(tuple(d[i]))
+
+        for i in range(0, len(f)):
+            d[i][0]=int(a[i][2]) - 1
+            d[i][1]=int(b[i][2]) - 1
+            d[i][2]=int(c[i][2]) - 1
+            fn.append(tuple(d[i]))
+
+        color2 = [200, 200, 200]
+        color1 = [100, 100, 100]
+        objPoint=[]
+        for i in range(0, len(vec)):
+            objPoint.append(Point(vec[i], color1))
+
+
+        self.points = objPoint
+        self.edges = [(0,1), (0,2), (1,3), (2,3), (4,5), (4,6), (5,7), (6,7), (0,6), (1, 7), (2,4), (3,5)]
+        self.triangles = fv
+
+
 class Model:
 
     def __init__(self, points, edges, triangles):
@@ -75,77 +152,120 @@ class Model:
     #     pass
 
 
-
-
-
 class canvas:
     def __init__(self, width, height):
         self.width = width
         self.height = height
         size = [width, height]
-        self.backingImage =Image.new('RGB', size, (255, 255, 255))
+        self.backingImage =Image.new('RGB', size, (0, 0, 0))
         self.drawer = ImageDraw.Draw(self.backingImage)
+        self.zBuffer = []
+        drawDistance = 1000
+        self.zBuffer = [[drawDistance for x in range(width)] for y in range(height)]
  
-    def drawModel(self, m, wireframeMode):
+    def drawModel(self, m, model_translate, model_scale, view_translate, wireframeMode):
 
 
-
-        for i in range(0, len(m.triangles)):
-            pointA = m.points[m.triangles[i][0]].copy()
-            pointB = m.points[m.triangles[i][1]].copy()
-            pointC = m.points[m.triangles[i][2]].copy()
-            pointA=self.perspective(pointA)
-            pointB=self.perspective(pointB)
-            pointC=self.perspective(pointC)
-            self.drawTriangle(pointA, pointB, pointC)
 
         if wireframeMode == True:
-            for i in range(0, len(m.edges)):
-                pointA = m.points[m.edges[i][0]].copy()
-                pointB = m.points[m.edges[i][1]].copy()
+            for i in range(0, len(m.triangles)):
+                pointA = m.points[m.triangles[i][0]].copy()
+                pointB = m.points[m.triangles[i][1]].copy()
+                pointC = m.points[m.triangles[i][2]].copy()
+
+                pointA.x*=model_scale[0]
+                pointB.x*=model_scale[0]
+                pointC.x*=model_scale[0]
+                pointA.y*=model_scale[1]
+                pointB.y*=model_scale[1]
+                pointC.y*=model_scale[1]
+                pointA.z*=model_scale[2]
+                pointB.z*=model_scale[2]
+                pointC.z*=model_scale[2]
+                
+                pointA.x+= model_translate[0] + view_translate[0]
+                pointB.x+= model_translate[0] + view_translate[0]
+                pointC.x+= model_translate[0] + view_translate[0]
+
+                pointA.y+= model_translate[1] + view_translate[1]
+                pointB.y+= model_translate[1] + view_translate[1]
+                pointC.y+= model_translate[1] + view_translate[1]
+
+                pointA.y+= model_translate[2] + view_translate[2]
+                pointB.y+= model_translate[2] + view_translate[2]
+                pointC.y+= model_translate[2] + view_translate[2]
+
+
                 pointA=self.perspective(pointA)
                 pointB=self.perspective(pointB)
+                pointC=self.perspective(pointC)
                 self.drawLine(pointA, pointB)
+                self.drawLine(pointB, pointC)
+                self.drawLine(pointC, pointA)
 
-    def wireCube(self, point1, point2, point3, point4, point5, point6, point7, point8):
+        else:
+            for i in range(0, len(m.triangles)):
 
-        screen.drawLine(point1, point2)
-        screen.drawLine(point1, point3)
-        screen.drawLine(point2, point4)
-        screen.drawLine(point3, point4)
+                pointA = m.points[m.triangles[i][0]].copy()
+                pointB = m.points[m.triangles[i][1]].copy()
+                pointC = m.points[m.triangles[i][2]].copy()
 
-        screen.drawLine(point5, point6)
-        screen.drawLine(point5, point7)
-        screen.drawLine(point6, point8)
-        screen.drawLine(point7, point8)
+                pointA.x*=model_scale[0]
+                pointB.x*=model_scale[0]
+                pointC.x*=model_scale[0]
+                pointA.y*=model_scale[1]
+                pointB.y*=model_scale[1]
+                pointC.y*=model_scale[1]
+                pointA.z*=model_scale[2]
+                pointB.z*=model_scale[2]
+                pointC.z*=model_scale[2]
 
-        screen.drawLine(point1, point5)
-        screen.drawLine(point2, point6)
-        screen.drawLine(point3, point7)
-        screen.drawLine(point4, point8)
+                pointA.x+= model_translate[0] + view_translate[0]
+                pointB.x+= model_translate[0] + view_translate[0]
+                pointC.x+= model_translate[0] + view_translate[0]
+
+                pointA.y+= model_translate[1] + view_translate[1]
+                pointB.y+= model_translate[1] + view_translate[1]
+                pointC.y+= model_translate[1] + view_translate[1]
+
+                pointA.z+= model_translate[2] + view_translate[2]
+                pointB.z+= model_translate[2] + view_translate[2]
+                pointC.z+= model_translate[2] + view_translate[2]
+
+                pointA=self.perspective(pointA)
+                pointB=self.perspective(pointB)
+                pointC=self.perspective(pointC)
+                self.drawTriangle(pointA, pointB, pointC)
 
     def perspective(self, p):
         mp = (self.width/2, self.height/2)
-      #  p1.x = Math.flerp(p1.x, mp[0], (p1.z/10*0.0001))
-       # p1.y = Math.flerp(p1.y, mp[1], (p1.z/10*0.0001))
-        p.x = p.x + ((mp[0] - p.x)*p.z*0.01)
-        p.y = p.y + ((mp[1] - p.y)*p.z*0.01)
+
+        p.x = p.x + ((mp[0] - p.x)*p.z*0.0005)
+        p.y = p.y + ((mp[1] - p.y)*p.z*0.0005)
 
         return p
 
     def setPixel(self, a):
-        self.drawer.point((int(round(a.x)), int(round(a.y))), fill=a.color)
+        
+        x=int(round(a.x))
+        y=int(round(a.y))
+        z=int(round(a.z))
+        color = (300-z, 300-z, 300-z)
+        if self.zBuffer[x][y] > z:
+            self.zBuffer[x][y] = z
+            self.drawer.point((x, y), fill=color)
 
-    def drawLine(self, point1, point2):
-        p1 = point1.copy()
-        p2 = point2.copy()
-        # p1 = self.perspective(p1)
-        # p2 = self.perspective(p2)
-        longest_axis = math.ceil(max(abs(p2.x - p1.x), abs(p2.y - p1.y)))
 
-        for i in range(0, int(longest_axis)):
-            point = Point.lerp(p1, p2, i / longest_axis)
-            self.setPixel(point)
+    def drawLine(self, p1, p2):
+
+        longest_axis = (max(abs(p2.x - p1.x), abs(p2.y - p1.y)))
+        
+        if longest_axis == 0:
+            longest_axis = 1
+        rounded_axis = math.ceil(longest_axis)
+        for i in range(0, int(rounded_axis) +2):
+                point = Point.lerp(p1, p2, i / (rounded_axis) -1/rounded_axis)
+                self.setPixel(point)
             
     def drawRectangle(x, y, width, height, col1, col2, col3, col4):
         topLineStart = [x, y]
@@ -158,47 +278,37 @@ class canvas:
             topLineStart[0] += 1
             topLineEnd[0] += 1
 
-    def drawTriangle(self, point1, point2, point3):
-        p1 = point1.copy()
-        p2 = point2.copy()
-        p3 = point3.copy()
-        # p1 = self.perspective(p1)
-        # p2 = self.perspective(p2)
-        # p3 = self.perspective(p3)
+    def drawTriangle(self, p1, p2, p3):
+
         p1, p2, p3 = Math.sortVec(p1, p2, p3)
-
-
-        # p1 = self.perspective(p1)
-        # p2 = self.perspective(p2)
-        # p3 = self.perspective(p3)
 
         spanLengthV3 = abs(p1.y - p3.y)
         spanLengthV2 = abs(p1.y - p2.y)
-        spanLength = abs(max(p1.x, p1.y))
-        if spanLengthV2 == 0:
-            spanLengthV2 = 1
-        if spanLengthV3 == 0:
-            spanLengthV3 = 1
 
         t=0
         if (p2.y-p3.y) != 0:
 
             t = abs((p1.y-p3.y)/(p2.y-p3.y))
+
         p4 = Point.lerp(p3, p2, t)
+        spanV3 = math.ceil(spanLengthV3)
+        spanV2 = math.ceil(spanLengthV2)
 
 
-        for i in range(0, int(spanLengthV2) + 1):
-            a = Point.lerp(p2,p1, i/spanLengthV2)
-            b = Point.lerp(p2,p4, i/spanLengthV2)
-            #a = self.perspective(a)
-            #b = self.perspective(b)
+        if spanV2 == 0:
+            spanV2 = 1
+        for i in range(0, int(spanV2+1)):
+            a = Point.lerp(p2,p1, i/(spanV2))
+            b = Point.lerp(p2,p4, i/(spanV2))
+
             self.drawLine(a, b)
 
-        for i in range(0, int(spanLengthV3) + 1):
-            a = Point.lerp(p3,p1, i/spanLengthV3)
-            b = Point.lerp(p3,p4, i/spanLengthV3)
-            #a = self.perspective(a)
-            #b = self.perspective(b)
+
+        if spanV3 == 0:
+            spanV3=1
+        for i in range(0, int(spanV3+1)):
+            a = Point.lerp(p3,p1, i/(spanV3))
+            b = Point.lerp(p3,p4, i/(spanV3))
             self.drawLine(a, b)
 
     def saveImage(self, name):
@@ -214,77 +324,32 @@ screen = canvas(width, height)
 # color3 = (randint(0, rgb), randint(0,rgb), randint(0,rgb))
 # color4 = (25, 90, 100)
 
-vec = []
-file = open("untitled.obj","r") #opens file with name of "test.txt"
-content = file.readlines()
-v = []
-content = [x.strip() for x in content]
-for i in range(0, len(content)):
-    if content[i].startswith('v'):
-        v.append(content[i])
-x= []
-y=[]
-for i in range(0, 8):
-    v[i]=v[i][2:]
-    vec.append(list(map(float, v[i].split())))
+hjul1 = [0,600,0]
+hjul2 = [400,600,00]
+hjul3 = [0,600,100]
+hjul4 = [400,600,100]
 
-    print(vec)
+vTranslate =[0, -200, 0]
 
+mScale = [0.25, 0.25, 0.25]
 
-# vec1 = [200, 200, 0]
-# vec2 = [200, 400, 0]
-# vec3 = [400, 200, 0]
-# vec4 = [400, 400, 0]
-# vec5 = [200, 200, 20]
-# vec6 = [200, 400, 20]
-# vec7 = [400, 200, 20]
-# vec8 = [400, 400, 20]
+loadedObject = Obj("cylinder")
+cube = Model(loadedObject.points, loadedObject.edges, loadedObject.triangles)
+screen.drawModel(cube, hjul1, mScale, vTranslate, False)
+screen.drawModel(cube, hjul2, mScale, vTranslate, False)
+screen.drawModel(cube, hjul3, mScale, vTranslate, False)
+screen.drawModel(cube, hjul4, mScale, vTranslate, False)
+# mTranslate = [0,0,0]
+# loadedObject = Obj("Kub")
+# cube = Model(loadedObject.points, loadedObject.edges, loadedObject.triangles)
+# screen.drawModel(cube, mTranslate, mScale, vTranslate, False)
 
-color1 = [50, 50, 50]
-color2 = [200, 200, 200]
+# loadedObject = Obj("cylinder")
+# cube = Model(loadedObject.points, loadedObject.edges, loadedObject.triangles)
+# screen.drawModel(cube, mTranslate, mScale, vTranslate, False)
 
-p1 = Point(vec[0], color1)
-p2 = Point(vec[1], color1)
-p3 = Point(vec[2], color1)
-p4 = Point(vec[3], color1)
-
-p5 = Point(vec[4], color2)
-p6 = Point(vec[5], color2)
-p7 = Point(vec[6], color2)
-p8 = Point(vec[7], color2)
-
-points = [p1, p2, p3, p4, p5, p6, p7, p8]
-edges = [(0,1), (0,2), (1,3), (2,3), (4,5), (4,6), (5,7), (6,7), (0,4), (1, 5), (2,6), (3,7)]
-triangles = [(7,4,6), (5,4,7), (0,2,4), (2,4,6), (3,7,6), (2,3,6), (0,1,5), (5,0,4), (1,3,5), (3,5,7), (0,1,2), (1,2,3)]
-
-
-cube = Model(points, edges, triangles)
-screen.drawModel(cube, True)
-# cube.points = [point1, point2, point3, point4, point5, point6, point7, point8]
-
-# # #baksidan
-# screen.drawTriangle(point8, point5, point7)
-# screen.drawTriangle(point6, point5, point8)
-
-# screen.drawTriangle(point1, point3, point5)
-# screen.drawTriangle(point3, point5, point7)
-
-# #högra sidan
-# screen.drawTriangle(point4, point8, point7)
-# screen.drawTriangle(point3, point4, point7)
-
-# #vänstra sidan
-# screen.drawTriangle(point1, point2, point6)
-# screen.drawTriangle(point6, point1, point5)
-
-# #undersidan
-# screen.drawTriangle(point2, point4, point6)
-# screen.drawTriangle(point4, point6, point8)
-# #framsida
-# screen.drawTriangle(point1, point2, point3)
-# screen.drawTriangle(point2, point3, point4)
-
-
-# screen.wireCube(cube.p1, cube.p2, cube.p3, cube.p4, cube.p5, cube.p6, cube.p7, cube.p8)
+# loadedObject = Obj("hjul2")
+# cube = Model(loadedObject.points, loadedObject.edges, loadedObject.triangles)
+# screen.drawModel(cube, True)
 
 screen.saveImage("beautiful")
